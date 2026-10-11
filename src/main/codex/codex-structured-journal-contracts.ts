@@ -21,6 +21,7 @@ export type CodexActiveJournalItem = {
 }
 
 export type CodexJournalTranslatorDeps = {
+  model?: () => string | null
   account?: () => AgentSessionAccountKind | undefined
   sink: StructuredAgentSessionEventSink
   /** Names this connection in frame-row identities, so a later connection never revises its rows. */
@@ -51,6 +52,7 @@ export type CodexJournalTranslatorDeps = {
 }
 
 export type CodexJournalTranslator = {
+  resetContext: () => void
   handle: (event: CodexStructuredSessionEvent) => CodexJournalTranslationAdmission
   /** Before Orca sends a conversation command: the next primary turn carries it out, and that
    *  turn's end is the command's. */

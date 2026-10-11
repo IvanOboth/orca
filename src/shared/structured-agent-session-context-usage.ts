@@ -35,9 +35,15 @@ export function latestStructuredAgentContextFacts(
   items: Iterable<ContextFactSource>,
   minimumSequence = 0
 ): AgentSessionContextUsage {
+  let session: { sequence: number; fact: NonNullable<AgentSessionContextUsage['session']> } | null =
+    null
   let used: { sequence: number; fact: AgentSessionContextUsed } | null = null
   let window: { sequence: number; fact: AgentSessionContextWindow } | null = null
   for (const item of items) {
+    const consumption = readAgentJournalTurn(item.body)?.contextUsage?.session
+    if (consumption && (!session || item.sequence >= session.sequence)) {
+      session = { sequence: item.sequence, fact: consumption }
+    }
     if (isAgentSessionContextClear(item.body) && item.sequence > minimumSequence) {
       minimumSequence = item.sequence
       if (used && used.sequence <= minimumSequence) {
@@ -58,7 +64,11 @@ export function latestStructuredAgentContextFacts(
       window = { sequence: item.sequence, fact: facts.window }
     }
   }
-  return { ...(used ? { used: used.fact } : {}), ...(window ? { window: window.fact } : {}) }
+  return {
+    ...(session ? { session: session.fact } : {}),
+    ...(used ? { used: used.fact } : {}),
+    ...(window ? { window: window.fact } : {})
+  }
 }
 
 /**
@@ -102,7 +112,7 @@ function summarizeStructuredAgentContextFacts({
   if (!window) {
     return null
   }
-  const usedTokens = contextTokensFromUsage(fact.usage)
+  const usedTokens = fact.usedTokens ?? contextTokensFromUsage(fact.usage)
   return {
     usedTokens,
     windowTokens: window.tokens,

@@ -1,3 +1,4 @@
+import { NativeChatMetricsFooter, type NativeChatMetrics } from './NativeChatMetricsFooter'
 import { NativeChatPromptEditor } from './NativeChatPromptEditor'
 import type { NativeChatComposerInput } from './native-chat-composer-input'
 import type { ClipboardEventHandler, KeyboardEventHandler, RefObject } from 'react'
@@ -83,6 +84,7 @@ export type NativeChatComposerFieldProps = {
   queueSendConfirm?: NativeChatQueueSendConfirm | null
   sessionOptionsSurface: SessionOptionsSurface | null
   sessionOptionsSnapshot: SessionOptionDescriptor[]
+  metrics?: NativeChatMetrics
   contextUsage?: NativeChatContextUsageSummary | null
   sessionOptionsPickerRequest?: NativeChatOptionPickerRequest | null
   goalMode?: NativeChatComposerGoalMode
@@ -169,6 +171,7 @@ export function NativeChatComposerField({
   sessionOptionsSurface,
   sessionOptionsSnapshot,
   contextUsage,
+  metrics,
   sessionOptionsPickerRequest,
   goalMode
 }: NativeChatComposerFieldProps): React.JSX.Element {
@@ -378,13 +381,14 @@ export function NativeChatComposerField({
                 {...(resume ? { onResume: resumeQueue } : {})}
                 sessionOptionsSurface={sessionOptionsSurface}
                 sessionOptionsSnapshot={sessionOptionsSnapshot}
-                contextUsage={contextUsage}
+                contextUsage={metrics ? null : contextUsage}
                 sessionOptionsPickerRequest={sessionOptionsPickerRequest}
                 focusComposer={focusComposer}
                 onExitGoalMode={goalMode?.active ? goalMode.exit : undefined}
               />
             </div>
           </div>
+          {metrics ? <NativeChatMetricsFooter context={contextUsage} metrics={metrics} /> : null}
         </div>
       </div>
       <NativeChatQueueSendConfirmDialog confirm={queueSendConfirm} focusComposer={focusComposer} />

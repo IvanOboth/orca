@@ -54,12 +54,36 @@ export type AgentSessionContextUsed =
   | ({ kind: 'report' } & AgentSessionContextReport)
   /** The newest main-thread response, whatever its blocks: its input is the
    *  live context size. A subagent's measures its own window. */
-  | { kind: 'estimate'; usage: AgentSessionTokenUsage; capturedAt: number }
+  | { kind: 'estimate'; usage: AgentSessionTokenUsage; usedTokens?: number; capturedAt: number }
   /** Compaction, a conversation reset or a model change: unknown until a response or report restates it. */
   | { kind: 'unknown'; capturedAt: number }
 
 /** Context facts on a turn row. An absent part says nothing. */
 export type AgentSessionContextUsage = {
+  session?: AgentSessionConsumption
   window?: AgentSessionContextWindow
   used?: AgentSessionContextUsed
+}
+
+/** Durable main-thread consumption, independent of the context window. */
+export type AgentSessionConsumption = {
+  totalTokens: number
+  inputTokens: number
+  cachedInputTokens: number
+  outputTokens: number
+  reasoningOutputTokens: number
+  estimatedCostUsd: number
+  unpricedTokens: number
+  /** Provider baseline for replay-safe running-total replacements. */
+  baseline: {
+    totalTokens: number
+    inputTokens: number
+    cachedInputTokens: number
+    outputTokens: number
+    reasoningOutputTokens: number
+  }
+  threadId: string
+  fingerprint: string
+  model: string | null
+  capturedAt: number
 }

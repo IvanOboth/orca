@@ -51,6 +51,26 @@ const MAX_CONTEXT_PART_BYTES: Record<keyof AgentSessionContextUsage, number> = (
   const text = (length: number) => '\u0000'.repeat(length)
   const number = -Number.MAX_VALUE
   const worst: Required<AgentSessionContextUsage> = {
+    session: {
+      totalTokens: number,
+      inputTokens: number,
+      cachedInputTokens: number,
+      outputTokens: number,
+      reasoningOutputTokens: number,
+      estimatedCostUsd: number,
+      unpricedTokens: number,
+      baseline: {
+        totalTokens: number,
+        inputTokens: number,
+        cachedInputTokens: number,
+        outputTokens: number,
+        reasoningOutputTokens: number
+      },
+      threadId: text(256),
+      fingerprint: text(2048),
+      model: text(MAX_CONTEXT_MODEL_ID_CHARS),
+      capturedAt: number
+    },
     window: { tokens: number, capturedAt: number },
     used: {
       kind: 'report',
@@ -67,12 +87,16 @@ const MAX_CONTEXT_PART_BYTES: Record<keyof AgentSessionContextUsage, number> = (
       capturedAt: number
     }
   }
-  return { window: jsonBytes(worst.window), used: jsonBytes(worst.used) }
+  return {
+    window: jsonBytes(worst.window),
+    used: jsonBytes(worst.used),
+    session: jsonBytes(worst.session)
+  }
 })()
 
 /** A part the write carries costs its own size; one kept from the row, at most the largest. */
 function contextBytesBound(write: AgentSessionContextUsage | undefined): number {
-  const parts: (keyof AgentSessionContextUsage)[] = ['window', 'used']
+  const parts: (keyof AgentSessionContextUsage)[] = ['window', 'used', 'session']
   return parts.reduce(
     (total, part) =>
       total + 32 + (write?.[part] ? jsonBytes(write[part]) : MAX_CONTEXT_PART_BYTES[part]),

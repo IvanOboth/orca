@@ -18683,6 +18683,23 @@
         "continue": "Continue",
         "failed": "Couldn't continue this chat. Try again, or send a message.",
         "explanation": "Continue, and the agent first checks whether its last step finished."
+      },
+      "metrics": {
+        "unavailable": "Unavailable",
+        "context": "Context",
+        "session": "Session",
+        "sessionTokens": "Conversation session tokens",
+        "total": "Total",
+        "input": "Input",
+        "cached": "Cached input (included)",
+        "output": "Output",
+        "reasoning": "Reasoning (in output)",
+        "scope": "Main conversation only. Child agents are excluded. Context resets do not reset session tokens.",
+        "apiValue": "Estimated API-equivalent value",
+        "partial": "Partial; {{tokens}} tokens have no price",
+        "valueExplanation": "Based on reported usage and API list prices. Subscription usage is not actual spend.",
+        "queued": "Queued",
+        "paused": "Paused"
       }
     },
     "tab": {

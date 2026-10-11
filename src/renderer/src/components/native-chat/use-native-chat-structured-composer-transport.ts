@@ -20,13 +20,17 @@ export function useNativeChatStructuredComposerTransport(args: {
     send: () => boolean | 'queued'
   ) => boolean | 'queued'
   /** The chat is starting: it takes no send yet. */
+  revealQueue?: () => void
   starting: boolean
   worktreeId: string | undefined
   optionPickerRequest: NativeChatOptionPickerRequest | null
   setOptionPickerRequest: Dispatch<SetStateAction<NativeChatOptionPickerRequest | null>>
   onError: NativeChatStructuredComposerTransport['onError']
   onSubmitted: () => void
-  queuedMessages: Pick<StructuredAgentSessionQueuedMessagesController, 'queueHold' | 'queueResume'>
+  queuedMessages: Pick<
+    StructuredAgentSessionQueuedMessagesController,
+    'queueHold' | 'queueResume' | 'hostCount' | 'hostPaused'
+  >
 }): NativeChatStructuredComposerTransport {
   const { props, controller, sendThroughLaunch, starting, worktreeId, optionPickerRequest } = args
   const { setOptionPickerRequest, onError, onSubmitted, queuedMessages } = args
@@ -70,6 +74,12 @@ export function useNativeChatStructuredComposerTransport(args: {
       sessionCommands: controller.sessionCommands,
       acceptsImages,
       contextUsage: controller.contextUsage,
+      metrics: {
+        session: controller.sessionUsage,
+        queued: queuedMessages.hostCount ?? null,
+        paused: queuedMessages.hostPaused === true,
+        revealQueue: args.revealQueue ?? (() => {})
+      },
       worktreeId,
       onError,
       onSubmitted,
@@ -81,6 +91,7 @@ export function useNativeChatStructuredComposerTransport(args: {
       queueResume: queuedMessages.queueResume
     }
   }, [
+    args.revealQueue,
     acceptsImages,
     controller,
     worktreeId,

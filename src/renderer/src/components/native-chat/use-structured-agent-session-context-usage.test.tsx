@@ -130,6 +130,39 @@ describe('useStructuredAgentSession context usage', () => {
     )
   })
 
+  it('retains session consumption through unloaded turn updates and context invalidation', async () => {
+    const baseline = {
+      totalTokens: 120,
+      inputTokens: 100,
+      cachedInputTokens: 50,
+      outputTokens: 20,
+      reasoningOutputTokens: 5
+    }
+    const session = {
+      ...baseline,
+      baseline,
+      estimatedCostUsd: 0.000305,
+      unpricedTokens: 0,
+      threadId: 'main',
+      fingerprint: 'first',
+      model: 'gpt-6.1-sol',
+      capturedAt: 1
+    }
+    answerOptions([
+      { session, used: estimate(100), window: WINDOW },
+      {
+        session: { ...session, totalTokens: 240, capturedAt: 2 },
+        used: { kind: 'unknown', capturedAt: 2 }
+      }
+    ])
+    const { result, rerender } = render()
+    await waitFor(() => expect(result.current.sessionUsage?.totalTokens).toBe(120))
+    unloadedTurnRevisions = 1
+    rerender()
+    await waitFor(() => expect(result.current.sessionUsage?.totalTokens).toBe(240))
+    expect(result.current.contextUsage).toBeNull()
+  })
+
   it('prefers the loaded window when it holds a newer turn fact', async () => {
     // The window part is only on an older row, so a full reading needs the host answer applied.
     items = [turnRow(900, { used: estimate(180_000) })]

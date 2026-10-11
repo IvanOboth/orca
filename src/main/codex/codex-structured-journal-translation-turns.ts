@@ -6,6 +6,7 @@ import {
   type AgentJournalTurnLifecycleState,
   type AgentJournalTurnOutcome
 } from '../../shared/agent-session-journal-types'
+import { resolveAgentJournalTurnRowWrite } from '../native-chat/agent-session-timeline/agent-journal-turn-row-revision'
 import { agentJournalItemKey } from '../../shared/agent-session-journal-item-key'
 import { agentJournalTurnBody } from '../../shared/agent-session-turn-record'
 import { CODEX_USER_MESSAGE_ORDINAL } from './codex-turn-ordinals'
@@ -115,7 +116,17 @@ export function publishCodexTurnLifecycle(input: {
       ? { observedAt: input.startedAt }
       : {})
   }
-  if (input.sink.tryAppendItem) {
+  if (input.sink.tryReviseResolvedItem) {
+    const admission = input.sink.tryReviseResolvedItem(
+      64 * 1024,
+      (journal) =>
+        resolveAgentJournalTurnRowWrite(journal, { identity }, { lifecycle: body }, 64 * 1024),
+      appendOptions
+    )
+    if (!admission.accepted) {
+      return admission
+    }
+  } else if (input.sink.tryAppendItem) {
     const admission = input.sink.tryAppendItem(identity, body, appendOptions)
     if (!admission.accepted) {
       return admission

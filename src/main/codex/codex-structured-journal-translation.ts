@@ -1,3 +1,4 @@
+import { handleCodexContextUsage, resetCodexContextUsage } from './codex-journal-context-usage'
 import { createCodexProviderActivityReader } from '../native-chat/agent-session-wire/provider-frame-activity'
 import { CODEX_TOKEN_USAGE_METHOD } from './codex-subagent-activity'
 import {
@@ -72,6 +73,7 @@ export function createCodexJournalTranslator(
     commands,
     ...(deps.now ? { now: deps.now } : {})
   })
+  let requestModel: string | null = null
   let primaryThreadStoppedRunning = false
   const reportPrimaryThreadStoppedRunning = (): void => {
     const primaryThreadId = deps.primaryThreadId?.() ?? null
@@ -108,9 +110,11 @@ export function createCodexJournalTranslator(
   }
 
   return {
+    resetContext: () => resetCodexContextUsage(deps),
     restoreThread: (threadId, thread) => {
       if (threadId === (deps.primaryThreadId?.() ?? null)) {
         readActivity = createCodexProviderActivityReader()
+        requestModel = null
       }
       return restoreCodexJournalThread({
         threadId,
@@ -211,6 +215,9 @@ export function createCodexJournalTranslator(
       if (event.type === 'provider-frame') {
         return genericFrames.appendUnhandled(event.kind, event.payload, event.threadId)
       }
+      if (event.method === 'turn/started' && event.threadId === deps.primaryThreadId?.()) {
+        requestModel = deps.model?.() ?? null
+      }
       if (event.method === 'turn/started' || event.method === 'turn/completed') {
         const childAdmission = subagents.handleTurnEvent(event)
         if (!childAdmission.accepted) {
@@ -225,6 +232,10 @@ export function createCodexJournalTranslator(
         }
         return admission
       }
+      const usageAdmission = handleCodexContextUsage(deps, event, requestModel)
+      if (usageAdmission && !usageAdmission.accepted) {
+        return usageAdmission
+      }
       const compaction = compactions.handle(event)
       if (compaction) {
         return publishActivity(event, compaction)
@@ -234,8 +245,6 @@ export function createCodexJournalTranslator(
         return publishActivity(event, goal)
       }
       if (event.method === CODEX_TOKEN_USAGE_METHOD) {
-        // Classified `status-chrome`, so the generic-frame path swallows it
-        // before the journal. The roster consumes it as a typed notification.
         const admission = subagents.handleTokenUsage(event.params)
         if (admission) {
           return admission
