@@ -17,6 +17,11 @@ import type { CodexPendingJournalPrompt } from './codex-structured-journal-settl
 import type { CodexJournalTranslationAdmission } from './codex-structured-journal-contracts'
 import { CODEX_JOURNAL_ADMITTED } from './codex-structured-journal-contracts'
 
+import {
+  codexLifecycleMutationsWithContext,
+  codexLifecycleMutationsReservedBytes
+} from './codex-lifecycle-context-usage'
+
 const ADMITTED: StructuredAgentSessionSinkAdmission = { accepted: true }
 
 export function appendCodexLifecycleMutations(
@@ -28,7 +33,23 @@ export function appendCodexLifecycleMutations(
     return ADMITTED
   }
   let admission: StructuredAgentSessionSinkAdmission = ADMITTED
-  if (sink.tryAppendLifecycleBatch) {
+  if (
+    sink.tryAppendTransition &&
+    mutations.some((mutation) => mutation.kind === 'item' && mutation.body.kind === 'turn')
+  ) {
+    admission = sink.tryAppendTransition({
+      lifecycle: true,
+      publish: false,
+      steps: [
+        {
+          kind: 'settlement',
+          settlementId,
+          reservedBytes: codexLifecycleMutationsReservedBytes(mutations),
+          resolve: (journal) => codexLifecycleMutationsWithContext(journal, mutations)
+        }
+      ]
+    })
+  } else if (sink.tryAppendLifecycleBatch) {
     admission = sink.tryAppendLifecycleBatch(settlementId, mutations, { lifecycle: true })
   } else if (sink.appendLifecycleBatch) {
     admission = sink.appendLifecycleBatch(settlementId, mutations, { lifecycle: true }) ?? ADMITTED

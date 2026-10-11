@@ -1,4 +1,5 @@
-import { NativeChatMetricsFooter, type NativeChatMetrics } from './NativeChatMetricsFooter'
+import { NativeChatMetricsFooter } from './NativeChatMetricsFooter'
+import type { NativeChatMetrics } from './native-chat-metrics'
 import { NativeChatPromptEditor } from './NativeChatPromptEditor'
 import type { NativeChatComposerInput } from './native-chat-composer-input'
 import type { ClipboardEventHandler, KeyboardEventHandler, RefObject } from 'react'

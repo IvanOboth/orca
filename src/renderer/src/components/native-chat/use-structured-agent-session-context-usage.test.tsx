@@ -148,6 +148,8 @@ describe('useStructuredAgentSession context usage', () => {
       model: 'gpt-6.1-sol',
       capturedAt: 1
     }
+    // The host's latest row has fallen out of this bounded loaded page.
+    items = [turnRow(800, { session }), messageRow(900)]
     answerOptions([
       { session, used: estimate(100), window: WINDOW },
       {

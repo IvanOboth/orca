@@ -186,7 +186,7 @@ export function normalizeModelForPricing(model: string | null): string | null {
   if (normalized === 'gpt-5.6-luna' || normalized.startsWith('gpt-5.6-luna-')) {
     return 'gpt-5.6-luna'
   }
-  if (normalized === 'gpt-6.1-sol' || normalized.startsWith('gpt-6.1-sol-')) {
+  if (normalized === 'gpt-6.1-sol' || /^gpt-6\.1-sol-\d{4}-\d{2}-\d{2}$/.test(normalized)) {
     return 'gpt-6.1-sol'
   }
   if (normalized === 'gpt-6-astra' || normalized.startsWith('gpt-6-astra-')) {

@@ -8,6 +8,8 @@ it('reveals before launch Retry, but waits for a successful queue Resume', async
   const controller = {
     respond: vi.fn(async () => null),
     queuedMessages: {
+      hostCount: 0,
+      hostPaused: false,
       queueCapable: true,
       cards: [],
       pause: null,

@@ -155,13 +155,17 @@ export async function readStructuredAgentSessionOptions(
   }
   // Re-acquired after the reads above: the handle they saw may have closed and reopened since.
   const session = await context.conversation(sessionId)
-  const phase = store.getRecord(sessionId)?.rewind?.phase
+  const record = store.getRecord(sessionId)
+  const phase = record?.rewind?.phase
   const agent = session.params.provider
   const capabilities = agents.capabilities(agent)
   const floor = session.journal.context.floor()
   const contextFloor = floor ? { contextFloor: floor } : {}
   return {
     ...options,
+    ...(record && Number.isFinite(record.createdAt) && record.createdAt > 0
+      ? { sessionTiming: { createdAt: record.createdAt } }
+      : {}),
     rewind:
       phase === 'prepared' || phase === 'provider-succeeded'
         ? { supported: false, reason: 'outcome-unknown' }

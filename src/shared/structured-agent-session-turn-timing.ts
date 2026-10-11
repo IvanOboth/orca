@@ -155,6 +155,20 @@ export function completedStructuredAgentTurnSeconds(
     : null
 }
 
+/** The whole-journal latest turn stays authoritative outside a loaded page. */
+export function latestStructuredAgentTurnSeconds(
+  latestTurn: AgentSessionLatestTurn | null | undefined
+): number | null {
+  return completedStructuredAgentTurnSeconds(
+    latestTurn
+      ? readTiming(
+          { body: { kind: 'turn', ...latestTurn.turn }, observedAt: latestTurn.observedAt },
+          undefined
+        )
+      : null
+  )
+}
+
 /** A local-clock anchor for the live counter that carries no host/client skew.
  *  With the host's own clock at publish time, the anchor is the client's first
  *  sighting moved back by how long the host says the turn has already run, so a

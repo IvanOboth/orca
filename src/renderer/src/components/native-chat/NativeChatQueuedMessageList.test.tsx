@@ -76,6 +76,8 @@ function controller(
   resume: ReturnType<typeof vi.fn>
 } {
   return {
+    hostCount: queueCapable ? cards.length : null,
+    hostPaused: pause !== null,
     cards,
     queueCapable,
     pause,

@@ -35,6 +35,30 @@ function rig() {
       rows.set(agentJournalItemKey(identity), { body, sequence: ++serial }),
     appendTombstone: () => {},
     publish: () => {},
+    tryAppendTransition: (transition) => {
+      for (const step of transition.steps) {
+        if (step.kind !== 'settlement') {
+          throw new Error('unexpected test transition')
+        }
+        const mutations = step.resolve({
+          epoch: 'epoch',
+          itemBody: (id) => rows.get(id)?.body ?? null,
+          item: () => null,
+          visitItemsWithLinkage: () => {},
+          visitItems: () => {}
+        })
+        for (const mutation of mutations) {
+          if (mutation.kind === 'item') {
+            const id =
+              mutation.itemId ?? (mutation.identity ? agentJournalItemKey(mutation.identity) : null)
+            if (id) {
+              rows.set(id, { body: mutation.body, sequence: ++serial })
+            }
+          }
+        }
+      }
+      return { accepted: true }
+    },
     tryReviseResolvedItem: revise,
     tryReviseResolvedItemAndPublish: revise
   }

@@ -18,6 +18,7 @@ function restingRecord(): AgentSessionRecord {
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the resting read and the catalog key touch only these fields.
   return {
     provider: 'codex',
+    createdAt: 123_000,
     accountHome: { variable: 'CODEX_HOME', path: '/homes/a' },
     location: { wslDistro: null },
     options: {}
@@ -25,7 +26,7 @@ function restingRecord(): AgentSessionRecord {
 }
 
 describe('options at rest', () => {
-  it.each(['codex', 'omp', 'grok', 'opencode'] as const)(
+  it.each(['codex', 'omp', 'grok', 'opencode', 'claude'] as const)(
     'omits an unknown model for %s while the catalog is unavailable',
     async (provider) => {
       const record = { ...restingRecord(), provider }
@@ -39,7 +40,7 @@ describe('options at rest', () => {
       })
       const resting = {
         child: null,
-        params: { provider: 'codex' },
+        params: { provider },
         journal: { context: { floor: () => null } }
       }
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the resting read touches only these members.
@@ -56,6 +57,7 @@ describe('options at rest', () => {
       } as unknown as StructuredAgentSessionMutationContext
 
       const result = await readStructuredAgentSessionOptions(context, SESSION)
+      expect(result.sessionTiming).toEqual({ createdAt: 123_000 })
       expect(probe).toHaveBeenCalledTimes(provider === 'codex' ? 1 : 0)
       expect(result.models).toEqual([])
       expect(result.current).not.toHaveProperty('model')
@@ -64,6 +66,10 @@ describe('options at rest', () => {
         model: 'later-model',
         effort: 'off'
       })
+      record.createdAt = Number.NaN
+      expect(
+        (await readStructuredAgentSessionOptions(context, SESSION)).sessionTiming
+      ).toBeUndefined()
     }
   )
 })

@@ -1,17 +1,11 @@
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { translate } from '@/i18n/i18n'
-import type { AgentSessionConsumption } from '../../../../shared/agent-session-context-usage'
+import type { NativeChatMetrics } from './native-chat-metrics'
 import type { NativeChatContextUsageSummary } from './native-chat-context-usage-summary'
 import { formatContextTokenCount } from './native-chat-context-usage-summary'
 import { NativeChatContextUsageRing } from './NativeChatContextUsageRing'
-
-export type NativeChatMetrics = {
-  session: AgentSessionConsumption | null
-  queued: number | null
-  paused: boolean
-  revealQueue: () => void
-}
+import { NativeChatMetricsTimers } from './NativeChatMetricsTimers'
 
 export function NativeChatMetricsFooter({
   context,
@@ -99,6 +93,7 @@ export function NativeChatMetricsFooter({
           </div>
         </PopoverContent>
       </Popover>
+      <NativeChatMetricsTimers timing={metrics.timing} />
       <Button
         type="button"
         variant="ghost"

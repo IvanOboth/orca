@@ -474,6 +474,8 @@ export type AgentSessionThreadGoalResult = {
 /** Provider-reported choices and effective next-turn values. Additive read-only
  *  surface so older hosts can reject it without changing structured v1 writes. */
 export type AgentSessionOptionsResult = {
+  /** Host-recorded conversation creation time; absent on older hosts. */
+  sessionTiming?: { createdAt: number }
   rewind?: AgentSessionRewindSupport
   conversationCommands?: readonly AgentSessionConversationCommand[]
   /** Present only where this session can change its goal, so a host without

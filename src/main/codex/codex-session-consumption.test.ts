@@ -54,6 +54,9 @@ describe('durable Codex session consumption', () => {
     const absentLast = codexSessionConsumption(frame(counts(), null), undefined, 'gpt-6.1-sol', 1)!
     expect(absentLast.unpricedTokens).toBe(120)
     expect(codexSessionConsumption(frame(), undefined, 'future-model', 1)?.unpricedTokens).toBe(120)
+    expect(
+      codexSessionConsumption(frame(), undefined, 'gpt-6.1-sol-new-variant', 1)?.unpricedTokens
+    ).toBe(120)
   })
   it('uses model at each increment, leaves cache-write pricing unavailable', () => {
     const first = codexSessionConsumption(frame(), undefined, 'gpt-6.1-sol', 1)!

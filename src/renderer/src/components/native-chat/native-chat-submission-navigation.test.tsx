@@ -396,6 +396,8 @@ it('reveals a structured prompt answer at the press, before the host accepts it'
       {
         respond: async () => host.promise,
         queuedMessages: {
+          hostCount: 0,
+          hostPaused: false,
           queueCapable: true,
           cards: [],
           pause: null,

@@ -14,7 +14,7 @@ import {
 } from './codex-structured-journal-translation-restore'
 import { CodexJournalTurnBoundaries } from './codex-structured-journal-translation-turn-boundaries'
 import { createCodexJournalTranslatorWriters } from './codex-structured-journal-translation-writers'
-import { publishCodexTurnLifecycle } from './codex-structured-journal-translation-turns'
+import { publishCodexRestoredTurnLifecycle } from './codex-structured-journal-translation-turns'
 import { codexProviderRetryRowBody, isCodexProviderRetryFrame } from './codex-provider-retry-row'
 import { createCodexThreadItemRouter } from './codex-structured-journal-thread-item-routing'
 import { codexThreadStoppedRunning, readCodexTurnId } from './codex-structured-thread-facts'
@@ -73,8 +73,8 @@ export function createCodexJournalTranslator(
     commands,
     ...(deps.now ? { now: deps.now } : {})
   })
-  let requestModel: string | null = null
-  let primaryThreadStoppedRunning = false
+  let requestModel: string | null = null,
+    primaryThreadStoppedRunning = false
   const reportPrimaryThreadStoppedRunning = (): void => {
     const primaryThreadId = deps.primaryThreadId?.() ?? null
     if (!primaryThreadStoppedRunning || !primaryThreadId || activeTurns.current(primaryThreadId)) {
@@ -131,7 +131,7 @@ export function createCodexJournalTranslator(
         ...(deps.sessionId !== undefined
           ? {
               restoreTurnLifecycle: (turnLifecycle) =>
-                publishCodexTurnLifecycle({
+                publishCodexRestoredTurnLifecycle({
                   sink: deps.sink,
                   primaryThreadId: deps.primaryThreadId?.() ?? null,
                   sessionId: deps.sessionId as string,
@@ -252,8 +252,7 @@ export function createCodexJournalTranslator(
       }
       if (event.method === 'item/started' || event.method === 'item/completed') {
         const routed = routeThreadItem(event)
-        // Not a bare return: a claimed item must not skip the turn-tail arm,
-        // which is the only publisher of its activity copy.
+        // Routed items still publish their activity copy.
         if (routed) {
           return publishActivity(event, routed)
         }

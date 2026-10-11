@@ -76,6 +76,7 @@ export function useNativeChatStructuredComposerTransport(args: {
       contextUsage: controller.contextUsage,
       metrics: {
         session: controller.sessionUsage,
+        timing: controller.sessionTiming,
         queued: queuedMessages.hostCount ?? null,
         paused: queuedMessages.hostPaused === true,
         revealQueue: args.revealQueue ?? (() => {})

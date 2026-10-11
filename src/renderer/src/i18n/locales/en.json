@@ -18699,7 +18699,12 @@
         "partial": "Partial; {{tokens}} tokens have no price",
         "valueExplanation": "Based on reported usage and API list prices. Subscription usage is not actual spend.",
         "queued": "Queued",
-        "paused": "Paused"
+        "paused": "Paused",
+        "run": "Run",
+        "last": "Last",
+        "conversation": "Conversation",
+        "runTiming": "Run is elapsed time for the current response; Last is the host-recorded duration of the latest finished response.",
+        "conversationTiming": "Conversation age since Orca created this conversation, including idle time."
       }
     },
     "tab": {

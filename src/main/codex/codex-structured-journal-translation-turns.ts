@@ -6,7 +6,10 @@ import {
   type AgentJournalTurnLifecycleState,
   type AgentJournalTurnOutcome
 } from '../../shared/agent-session-journal-types'
-import { resolveAgentJournalTurnRowWrite } from '../native-chat/agent-session-timeline/agent-journal-turn-row-revision'
+import {
+  agentJournalTurnRowReservedBytes,
+  resolveAgentJournalTurnRowWrite
+} from '../native-chat/agent-session-timeline/agent-journal-turn-row-revision'
 import { agentJournalItemKey } from '../../shared/agent-session-journal-item-key'
 import { agentJournalTurnBody } from '../../shared/agent-session-turn-record'
 import { CODEX_USER_MESSAGE_ORDINAL } from './codex-turn-ordinals'
@@ -81,6 +84,7 @@ export function codexTurnOutcome(status: string | null): AgentJournalTurnOutcome
 
 export function publishCodexTurnLifecycle(input: {
   sink: StructuredAgentSessionEventSink
+  preserveContext?: true
   primaryThreadId: string | null
   sessionId: string
   threadId: string
@@ -116,11 +120,12 @@ export function publishCodexTurnLifecycle(input: {
       ? { observedAt: input.startedAt }
       : {})
   }
-  if (input.sink.tryReviseResolvedItem) {
+  if (input.preserveContext && input.sink.tryReviseResolvedItem) {
+    const reservedBytes = agentJournalTurnRowReservedBytes({ identity }, { lifecycle: body })
     const admission = input.sink.tryReviseResolvedItem(
-      64 * 1024,
+      reservedBytes,
       (journal) =>
-        resolveAgentJournalTurnRowWrite(journal, { identity }, { lifecycle: body }, 64 * 1024),
+        resolveAgentJournalTurnRowWrite(journal, { identity }, { lifecycle: body }, reservedBytes),
       appendOptions
     )
     if (!admission.accepted) {
@@ -146,4 +151,10 @@ export function publishCodexTurnLifecycle(input: {
   }
   input.sink.publish(publishOptions)
   return ADMITTED
+}
+
+export function publishCodexRestoredTurnLifecycle(
+  input: Parameters<typeof publishCodexTurnLifecycle>[0]
+): StructuredAgentSessionSinkAdmission {
+  return publishCodexTurnLifecycle({ ...input, preserveContext: true })
 }
