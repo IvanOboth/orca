@@ -31,6 +31,8 @@ import type { StructuredAgentSessionMutate } from './use-structured-agent-sessio
 import type { NativeChatQueueHold } from './native-chat-composer-types'
 
 export type StructuredAgentSessionQueuedMessagesController = {
+  hostCount: number | null
+  hostPaused: boolean
   cards: QueuedMessageCard[]
   /** The host queues sends. Without it a card can still show — a message the host kept unsent —
    *  but queueing settings and the steer chord would do nothing. */
@@ -258,6 +260,8 @@ export function useStructuredAgentSessionQueuedMessages(args: {
   const queueHold = useMemo(() => (held ? { count, clear } : undefined), [held, count, clear])
 
   return {
+    hostCount: queuedMessages === null ? null : queuedMessages.length,
+    hostPaused: queuePause !== null,
     cards,
     queueCapable: enabled,
     pause,

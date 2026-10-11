@@ -216,7 +216,12 @@ export function NativeChatStructuredSession(
     setOptionPickerRequest,
     onError: reportComposerError,
     onSubmitted: revealLatest,
-    queuedMessages: submits.queuedMessages
+    queuedMessages: submits.queuedMessages,
+    revealQueue: () => {
+      const queue = rootRef.current?.querySelector<HTMLElement>('[data-native-chat-queue]')
+      queue?.scrollIntoView({ block: 'nearest' })
+      queue?.focus({ preventScroll: true })
+    }
   })
 
   // Said once: on the pane when the failure took it, else in the composer's notices.

@@ -182,6 +182,7 @@ function applyUnlistedCodexSessionOption(
     value !== (session.options.get('model') ?? session.reportedOptions.model)
   ) {
     // An effort saved under another model is unverified for this one; its default applies.
+    session.translator?.resetContext()
     session.options.delete('effort')
   }
   session.options.set(key, value)
@@ -261,6 +262,9 @@ function applyValidatedCodexStructuredSessionOption(
       : (model?.efforts.find((entry) => entry.value === requestedEffort)?.value ??
         model?.defaultEffort ??
         model?.efforts[0]?.value)
+  if (modelId !== priorModel) {
+    session.translator?.resetContext()
+  }
   session.options.set('model', modelId)
   if (effort) {
     session.options.set('effort', effort)

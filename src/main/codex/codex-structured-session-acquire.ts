@@ -91,6 +91,10 @@ export async function acquireCodexStructuredSession(input: {
   const translator = createCodexSessionJournalTranslator({
     sink: acquireInput.events,
     account: () => account,
+    model: () => {
+      const session = sessions.get(sessionId)
+      return session?.options.get('model') ?? session?.reportedOptions.model ?? null
+    },
     sessionId,
     acquisitionId: acquisitionGeneration,
     deps,

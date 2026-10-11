@@ -5,9 +5,14 @@ import type {
   AgentJournalItemBody,
   AgentJournalItemIdentity
 } from '../../../shared/agent-session-journal-types'
-import type { JournalItemAppendOptions } from '../agent-session-journal/journal-store-contracts'
+import type { JournalStep } from '../agent-session-journal/journal-step-writer'
+import type {
+  JournalLifecycleBatchInput,
+  JournalItemAppendOptions
+} from '../agent-session-journal/journal-store-contracts'
 
 type AppendingDouble = {
+  appendLifecycleBatch?: (input: JournalLifecycleBatchInput) => Promise<unknown>
   appendItem: (
     identity: AgentJournalItemIdentity,
     body: AgentJournalItemBody,
@@ -18,6 +23,7 @@ type AppendingDouble = {
 export function withJournalQueueMembers<T extends AppendingDouble>(
   journal: T
 ): T & {
+  appendSteps: (steps: readonly JournalStep[]) => Promise<boolean[]>
   readInOrder: <R>(read: () => R) => Promise<R>
   appendResolvedItem: (
     resolve: () => { identity: AgentJournalItemIdentity; body: AgentJournalItemBody } | null,
@@ -25,6 +31,28 @@ export function withJournalQueueMembers<T extends AppendingDouble>(
   ) => Promise<unknown>
 } {
   return Object.assign(journal, {
+    appendSteps: async (steps: readonly JournalStep[]): Promise<boolean[]> => {
+      const wrote: boolean[] = []
+      for (const step of steps) {
+        if (step.kind === 'settlement') {
+          const mutations = step.batch.resolve()
+          if (mutations.length > 0) {
+            if (!journal.appendLifecycleBatch) {
+              throw new Error('journal double lacks lifecycle batches')
+            }
+            await journal.appendLifecycleBatch({ ...step.batch, mutations })
+          }
+          wrote.push(mutations.length > 0)
+        } else {
+          const resolved = step.resolve()
+          if (resolved) {
+            await journal.appendItem(resolved.identity, resolved.body, step.options)
+          }
+          wrote.push(resolved !== null)
+        }
+      }
+      return wrote
+    },
     readInOrder: async <R>(read: () => R): Promise<R> => read(),
     appendResolvedItem: async (
       resolve: () => { identity: AgentJournalItemIdentity; body: AgentJournalItemBody } | null,

@@ -1,3 +1,4 @@
+import { handleCodexContextUsage, resetCodexContextUsage } from './codex-journal-context-usage'
 import { createCodexProviderActivityReader } from '../native-chat/agent-session-wire/provider-frame-activity'
 import { CODEX_TOKEN_USAGE_METHOD } from './codex-subagent-activity'
 import {
@@ -13,7 +14,7 @@ import {
 } from './codex-structured-journal-translation-restore'
 import { CodexJournalTurnBoundaries } from './codex-structured-journal-translation-turn-boundaries'
 import { createCodexJournalTranslatorWriters } from './codex-structured-journal-translation-writers'
-import { publishCodexTurnLifecycle } from './codex-structured-journal-translation-turns'
+import { publishCodexRestoredTurnLifecycle } from './codex-structured-journal-translation-turns'
 import { codexProviderRetryRowBody, isCodexProviderRetryFrame } from './codex-provider-retry-row'
 import { createCodexThreadItemRouter } from './codex-structured-journal-thread-item-routing'
 import { codexThreadStoppedRunning, readCodexTurnId } from './codex-structured-thread-facts'
@@ -72,7 +73,8 @@ export function createCodexJournalTranslator(
     commands,
     ...(deps.now ? { now: deps.now } : {})
   })
-  let primaryThreadStoppedRunning = false
+  let requestModel: string | null = null,
+    primaryThreadStoppedRunning = false
   const reportPrimaryThreadStoppedRunning = (): void => {
     const primaryThreadId = deps.primaryThreadId?.() ?? null
     if (!primaryThreadStoppedRunning || !primaryThreadId || activeTurns.current(primaryThreadId)) {
@@ -108,9 +110,11 @@ export function createCodexJournalTranslator(
   }
 
   return {
+    resetContext: () => resetCodexContextUsage(deps),
     restoreThread: (threadId, thread) => {
       if (threadId === (deps.primaryThreadId?.() ?? null)) {
         readActivity = createCodexProviderActivityReader()
+        requestModel = null
       }
       return restoreCodexJournalThread({
         threadId,
@@ -127,7 +131,7 @@ export function createCodexJournalTranslator(
         ...(deps.sessionId !== undefined
           ? {
               restoreTurnLifecycle: (turnLifecycle) =>
-                publishCodexTurnLifecycle({
+                publishCodexRestoredTurnLifecycle({
                   sink: deps.sink,
                   primaryThreadId: deps.primaryThreadId?.() ?? null,
                   sessionId: deps.sessionId as string,
@@ -211,6 +215,9 @@ export function createCodexJournalTranslator(
       if (event.type === 'provider-frame') {
         return genericFrames.appendUnhandled(event.kind, event.payload, event.threadId)
       }
+      if (event.method === 'turn/started' && event.threadId === deps.primaryThreadId?.()) {
+        requestModel = deps.model?.() ?? null
+      }
       if (event.method === 'turn/started' || event.method === 'turn/completed') {
         const childAdmission = subagents.handleTurnEvent(event)
         if (!childAdmission.accepted) {
@@ -225,6 +232,10 @@ export function createCodexJournalTranslator(
         }
         return admission
       }
+      const usageAdmission = handleCodexContextUsage(deps, event, requestModel)
+      if (usageAdmission && !usageAdmission.accepted) {
+        return usageAdmission
+      }
       const compaction = compactions.handle(event)
       if (compaction) {
         return publishActivity(event, compaction)
@@ -234,8 +245,6 @@ export function createCodexJournalTranslator(
         return publishActivity(event, goal)
       }
       if (event.method === CODEX_TOKEN_USAGE_METHOD) {
-        // Classified `status-chrome`, so the generic-frame path swallows it
-        // before the journal. The roster consumes it as a typed notification.
         const admission = subagents.handleTokenUsage(event.params)
         if (admission) {
           return admission
@@ -243,8 +252,7 @@ export function createCodexJournalTranslator(
       }
       if (event.method === 'item/started' || event.method === 'item/completed') {
         const routed = routeThreadItem(event)
-        // Not a bare return: a claimed item must not skip the turn-tail arm,
-        // which is the only publisher of its activity copy.
+        // Routed items still publish their activity copy.
         if (routed) {
           return publishActivity(event, routed)
         }

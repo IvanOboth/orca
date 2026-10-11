@@ -63,7 +63,7 @@ export function NativeChatQueuedMessageList({
     })
   }
   return (
-    <div aria-live="polite">
+    <div aria-live="polite" data-native-chat-queue="" tabIndex={-1}>
       {cards.length > 0 ? (
         <div ref={queueRef} className="mx-auto w-full max-w-(--chat-content-max-width) px-4 py-1">
           {/* One box: the pause row, when shown, is its first row, and each card a row below it. */}

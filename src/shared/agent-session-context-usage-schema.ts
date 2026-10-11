@@ -40,13 +40,40 @@ const Used = z.discriminatedUnion('kind', [
       .max(MAX_CONTEXT_CATEGORIES),
     capturedAt: CapturedAt
   }),
-  z.object({ kind: z.literal('estimate'), usage: TokenUsage, capturedAt: CapturedAt }),
+  z.object({
+    kind: z.literal('estimate'),
+    usage: TokenUsage,
+    usedTokens: TokenCount.optional(),
+    capturedAt: CapturedAt
+  }),
   z.object({ kind: z.literal('unknown'), capturedAt: CapturedAt })
 ])
 
 export const AgentSessionContextUsageSchema = z.object({
   window: z.object({ tokens: WindowTokens, capturedAt: CapturedAt }).optional(),
-  used: Used.optional()
+  used: Used.optional(),
+  session: z
+    .object({
+      totalTokens: TokenCount,
+      inputTokens: TokenCount,
+      cachedInputTokens: TokenCount,
+      outputTokens: TokenCount,
+      reasoningOutputTokens: TokenCount,
+      estimatedCostUsd: TokenCount,
+      unpricedTokens: TokenCount,
+      baseline: z.object({
+        totalTokens: TokenCount,
+        inputTokens: TokenCount,
+        cachedInputTokens: TokenCount,
+        outputTokens: TokenCount,
+        reasoningOutputTokens: TokenCount
+      }),
+      threadId: z.string().min(1).max(256),
+      fingerprint: z.string().max(2048),
+      model: ModelId.nullable(),
+      capturedAt: CapturedAt
+    })
+    .optional()
 })
 
 export function isAdmissibleAgentSessionContextUsage(

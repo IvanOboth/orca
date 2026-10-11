@@ -10,6 +10,7 @@ import type {
 
 export function createCodexSessionJournalTranslator(input: {
   sink: StructuredAgentSessionEventSink | undefined
+  model: () => string | null
   account: () => AgentSessionAccountKind | undefined
   sessionId: string
   acquisitionId: string
@@ -24,6 +25,7 @@ export function createCodexSessionJournalTranslator(input: {
     ? createCodexJournalTranslator({
         sink,
         account,
+        model: input.model,
         sessionId,
         acquisitionId,
         ...(deps.now ? { now: deps.now } : {}),

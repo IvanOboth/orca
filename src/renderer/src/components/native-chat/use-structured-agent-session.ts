@@ -25,6 +25,7 @@ import { useStructuredAgentSessionTransport } from './use-structured-agent-sessi
 import { useStructuredAgentSessionOptions } from './use-structured-agent-session-options'
 import type { StructuredAgentSessionLaunchView } from './use-native-chat-provisional-launch'
 import { useStructuredAgentSessionThreadGoal } from './use-structured-agent-session-thread-goal'
+import { useStructuredAgentSessionMetrics } from './use-structured-agent-session-metrics'
 import { useStructuredAgentSessionContextUsage } from './use-structured-agent-session-context-usage'
 import { useStructuredAgentSessionRailOutline } from './use-structured-agent-session-rail-outline'
 import { useStructuredAgentSessionQueuedMessages } from './use-structured-agent-session-queued-messages'
@@ -101,6 +102,7 @@ export function useStructuredAgentSession(args: {
     unavailable,
     threadGoal: threadGoalSupport,
     contextUsage: contextUsageSupport,
+    sessionTiming: sessionTimingSupport,
     rewind: rewindSupport
   } = useStructuredAgentSessionOptions({
     agent,
@@ -164,6 +166,12 @@ export function useStructuredAgentSession(args: {
     transportState.journalItems,
     contextUsageSupport,
     state.epoch
+  )
+  const { sessionUsage, sessionTiming } = useStructuredAgentSessionMetrics(
+    { sessionId, target, isVisible, transportEnabled },
+    state,
+    transportState,
+    { contextUsage: contextUsageSupport, sessionTiming: sessionTimingSupport }
   )
 
   const railOutline = useStructuredAgentSessionRailOutline({
@@ -312,6 +320,8 @@ export function useStructuredAgentSession(args: {
     /** Why the host's catalog probe says no chat can start here; the chat shows it as a notice. */
     unavailable,
     threadGoal,
-    contextUsage
+    contextUsage,
+    sessionUsage,
+    sessionTiming
   }
 }

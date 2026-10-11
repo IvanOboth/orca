@@ -1,3 +1,4 @@
+import type { NativeChatMetrics } from './native-chat-metrics'
 import type { NativeChatQueueResume } from './native-chat-composer-primary-action'
 import type { NativeChatComposerNotice } from './native-chat-composer-notice'
 import type { AgentSessionConversationCommand } from '../../../../shared/agent-session-conversation-command'
@@ -39,6 +40,7 @@ export type NativeChatQueueHold = {
 }
 
 export type NativeChatStructuredComposerTransport = {
+  metrics?: NativeChatMetrics
   conversationCommands?: readonly AgentSessionConversationCommand[]
   send: (
     text: string,
